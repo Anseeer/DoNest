@@ -12,5 +12,6 @@ const userController = new UserController(userService);
 route.post('/register', userController.register)
 route.post('/login', userController.login)
 route.post('/logout', auth, userController.logout)
+route.post('/fetch-user', auth, userController.fetchUser)
 
 export default route;

@@ -105,4 +105,17 @@ export class UserController implements IUserController {
         }
     }
 
+    fetchUser = async (req: AuthRequest, res: Response, next: NextFunction) => {
+        try {
+            const userId = req.user?.userId;
+            const user = await this._userService.findById(userId as string);
+            const response = new successResponse(StatusCode.OK, 'Fetch user successful.', { user });
+            res.status(response.status).json(response);
+        } catch (error) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            logger.error("Controller.userController -> Logout faild.", errMsg)
+            next(new errorResponse(StatusCode.INTERNAL_SERVER_ERROR, errMsg, {}))
+        }
+    }
+
 }

@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { IUser } from "../types/IUser";
-import { login, register } from "../services/userService";
+import { fetchUser, login, register } from "../services/userService";
 import { AxiosError } from "axios";
 
 interface userState {
@@ -42,11 +42,26 @@ export const userLoginThunk = createAsyncThunk(
     }
 )
 
+export const userFetchUserThunk = createAsyncThunk(
+    '/fetch-user',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await fetchUser();
+            console.log("response fetch :", response)
+            return response;
+        } catch (error) {
+            console.log(error)
+            const errMsg = error instanceof AxiosError ? error.response?.data?.message : "Login failed";
+            return rejectWithValue(errMsg)
+        }
+    }
+)
+
 const userSlice = createSlice({
     name: "user",
     initialState,
     reducers: {
-        logout: (state) => {
+        cleanData: (state) => {
             state.user = null;
             state.authenticated = false;
         }
@@ -63,8 +78,13 @@ const userSlice = createSlice({
                 state.authenticated = true;
                 state.user = action?.payload?.user;
             })
+            .addCase(userFetchUserThunk.fulfilled, (state, action) => {
+                console.log("Action :", action)
+                state.authenticated = true;
+                state.user = action?.payload?.user;
+            })
     }
 })
 
-export const { logout } = userSlice.actions;
+export const { cleanData } = userSlice.actions;
 export default userSlice.reducer;

@@ -72,6 +72,7 @@ export const Registration = () => {
             toast.success("Account created successfully");
             navigate('/home', { replace: true })
         } catch (error) {
+            setLoading(false)
             const errMsg = error instanceof AxiosError ? error.message : String(error);
             console.log(errMsg)
             toast.error(errMsg as string);
