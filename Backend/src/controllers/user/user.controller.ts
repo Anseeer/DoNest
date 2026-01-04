@@ -24,17 +24,19 @@ export class UserController implements IUserController {
             const userData = { name, email, password };
             const { user, accessToken, refreshToken } = await this._userService.register(userData);
 
+            const isProduction = process.env.NODE_ENV === "production";
+
             res.cookie("accessToken", accessToken, {
                 httpOnly: true,
-                sameSite: "strict",
-                secure: process.env.NODE_ENV === "production",
+                sameSite: isProduction ? "none" : "lax",
+                secure: isProduction,
                 maxAge: 10 * 60 * 1000,
             });
 
             res.cookie("refreshToken", refreshToken, {
                 httpOnly: true,
-                sameSite: "strict",
-                secure: process.env.NODE_ENV === "production",
+                sameSite: isProduction ? "none" : "lax",
+                secure: isProduction,
                 maxAge: 7 * 24 * 60 * 60 * 1000,
             });
 
@@ -58,19 +60,22 @@ export class UserController implements IUserController {
             const userData = { email, password };
             const { user, accessToken, refreshToken } = await this._userService.login(userData);
 
+            const isProduction = process.env.NODE_ENV === "production";
+
             res.cookie("accessToken", accessToken, {
                 httpOnly: true,
-                sameSite: "strict",
-                secure: process.env.NODE_ENV === "production",
+                sameSite: isProduction ? "none" : "lax",
+                secure: isProduction,
                 maxAge: 10 * 60 * 1000,
             });
 
             res.cookie("refreshToken", refreshToken, {
                 httpOnly: true,
-                sameSite: "strict",
-                secure: process.env.NODE_ENV === "production",
+                sameSite: isProduction ? "none" : "lax",
+                secure: isProduction,
                 maxAge: 7 * 24 * 60 * 60 * 1000,
             });
+
 
             const response = new successResponse(StatusCode.OK, 'Login successful.', { user });
             res.status(response.status).json(response);
