@@ -89,16 +89,18 @@ export class UserController implements IUserController {
     logout = async (req: AuthRequest, res: Response, next: NextFunction) => {
         try {
 
+            const isProduction = process.env.NODE_ENV === "production";
+
             res.clearCookie("accessToken", {
                 httpOnly: true,
-                sameSite: "strict",
-                secure: process.env.NODE_ENV === "production",
+                sameSite: isProduction ? "none" : "lax",
+                secure: isProduction,
             });
 
             res.clearCookie("refreshToken", {
                 httpOnly: true,
-                sameSite: "strict",
-                secure: process.env.NODE_ENV === "production",
+                sameSite: isProduction ? "none" : "lax",
+                secure: isProduction,
             });
 
             const response = new successResponse(StatusCode.OK, 'Logout successful.', {});
