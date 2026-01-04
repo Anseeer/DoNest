@@ -18,7 +18,6 @@ export const userRegisterThunk = createAsyncThunk(
     async (userData: Partial<IUser>, { rejectWithValue }) => {
         try {
             const response = await register(userData);
-            console.log("response register :", response)
             return response;
         } catch (error) {
             const errMsg = error instanceof AxiosError ? error.response?.data?.message : "Registration failed";
@@ -32,7 +31,6 @@ export const userLoginThunk = createAsyncThunk(
     async (userData: Partial<IUser>, { rejectWithValue }) => {
         try {
             const response = await login(userData);
-            console.log("response login :", response)
             return response;
         } catch (error) {
             console.log(error)
@@ -47,7 +45,6 @@ export const userFetchUserThunk = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const response = await fetchUser();
-            console.log("response fetch :", response)
             return response;
         } catch (error) {
             console.log(error)
@@ -69,19 +66,16 @@ const userSlice = createSlice({
     extraReducers: (builder) => {
         builder
             .addCase(userRegisterThunk.fulfilled, (state, action) => {
-                console.log("Action :", action)
                 state.authenticated = true;
                 state.user = action?.payload?.user;
             })
             .addCase(userLoginThunk.fulfilled, (state, action) => {
-                console.log("Action :", action)
                 state.authenticated = true;
                 state.user = action?.payload?.user;
             })
             .addCase(userFetchUserThunk.fulfilled, (state, action) => {
-                console.log("Action :", action)
                 state.authenticated = true;
-                state.user = action?.payload?.user;
+                state.user = action?.payload?.data?.user;
             })
     }
 })

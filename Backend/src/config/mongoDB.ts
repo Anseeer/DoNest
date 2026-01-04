@@ -12,7 +12,7 @@ export const mongooseConnection = () => {
                 logger.error("Faild to connect mongoose", err)
 
             })
-    } catch (err) {
+    } catch {
         process.exit(1)
     }
 }

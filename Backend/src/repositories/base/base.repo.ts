@@ -1,4 +1,4 @@
-import { Model } from "mongoose";
+import { Document, Model } from "mongoose";
 import { IRead, IWrite } from "./base.repo.interface";
 import logger from "../../utilities/logger";
 

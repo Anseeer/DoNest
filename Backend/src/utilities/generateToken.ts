@@ -8,7 +8,7 @@ export const generateAccessToken = (user: { userId: string; email: string }) => 
     }
 
     return jwt.sign(user, secret, {
-        expiresIn: "10m", 
+        expiresIn: "10m",
     });
 };
 
@@ -20,6 +20,6 @@ export const generateRefreshToken = (user: { userId: string; email: string }) =>
     }
 
     return jwt.sign(user, secret, {
-        expiresIn: "7d", 
+        expiresIn: "7d",
     });
 };

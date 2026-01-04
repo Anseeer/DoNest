@@ -1,85 +1,124 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Edit3, Trash2, Check, ChevronLeft, ChevronRight } from 'lucide-react';
-
-interface Task {
-    id: number;
-    title: string;
-    description: string;
-    completed: boolean;
-    createdAt: Date;
-}
+import { addTask, deleteTaskApi, toggleTaskApi, updateTaskApi } from '../services/userService';
+import { socket } from '../utilities/Socket';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../Store';
+import toast from 'react-hot-toast';
+import type { ITask } from '../types/ITask';
 
 export default function DoNestHome() {
-    const [tasks, setTasks] = useState<Task[]>([
-        {
-            id: 1,
-            title: "Review project proposal",
-            description: "Go through the Q1 marketing proposal and provide feedback",
-            completed: false,
-            createdAt: new Date()
-        },
-        {
-            id: 2,
-            title: "Team meeting preparation",
-            description: "Prepare slides and agenda for tomorrow's sprint planning",
-            completed: true,
-            createdAt: new Date()
-        },
-        {
-            id: 3,
-            title: "Update documentation",
-            description: "Add new API endpoints to the developer documentation",
-            completed: false,
-            createdAt: new Date()
-        }
-    ]);
-
+    const [tasks, setTasks] = useState<ITask[]>([]);
+    const userId = useSelector((state: RootState) => state.user.user?._id)
     const [newTask, setNewTask] = useState({ title: '', description: '' });
-    const [editingTask, setEditingTask] = useState<Task | null>(null);
-    const [addTask, setAddTask] = useState(false);
+    const [editingTask, setEditingTask] = useState<ITask | null>(null);
+    const [isAddTask, setAddTask] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const tasksPerPage = 5;
 
-    // const addTask = () => {
-    //     if (newTask.title.trim()) {
-    //         setTasks([
-    //             {
-    //                 id: Date.now(),
-    //                 title: newTask.title,
-    //                 description: newTask.description,
-    //                 completed: false,
-    //                 createdAt: new Date()
-    //             },
-    //             ...tasks
-    //         ]);
-    //         setNewTask({ title: '', description: '' });
-    //     }
-    // };
+    useEffect(() => {
+        if (!userId) return;
 
-    const updateTask = (task: Task) => {
-        setTasks(tasks.map(t => t.id === task.id ? task : t));
-        setEditingTask(null);
+        socket.auth = { userId };
+        socket.connect();
+
+        const handleTaskList = (tasks: ITask[]) => {
+            setTasks(tasks);
+        };
+
+        const handleTaskAdded = (newTask: ITask) => {
+            setTasks((prev) => [...prev, newTask]);
+        };
+
+        const handleTaskDeleted = (taskId: string) => {
+            setTasks((prev) => prev.filter(t => t._id.toString() !== taskId.toString()));
+        };
+
+        const handleTaskUpdated = (updatedTask: ITask) => {
+            setTasks((prev) => prev.map(t => t._id === updatedTask._id ? updatedTask : t));
+        };
+
+        const handleTaskToggle = (toggleTask: ITask) => {
+            setTasks((prev) => prev.map(t => t._id === toggleTask._id ? toggleTask : t));
+        };
+
+        socket.on('task:list', handleTaskList);
+        socket.on('task:added', handleTaskAdded);
+        socket.on('task:deleted', handleTaskDeleted);
+        socket.on('task:updated', handleTaskUpdated);
+        socket.on('task:toggled', handleTaskToggle);
+
+        return () => {
+            socket.off('task:list', handleTaskList);
+            socket.off('task:added', handleTaskAdded);
+            socket.off('task:updated', handleTaskUpdated);
+            socket.off('task:toggled', handleTaskToggle);
+            socket.off('task:deleted', handleTaskDeleted);
+            socket.disconnect();
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const updateTask = async (task: ITask) => {
+        try {
+            if (!task) return;
+            console.log('Updating on Server:', task);
+            await updateTaskApi(task);
+            setEditingTask(null);
+            toast.success("Task updated successfully");
+        } catch (error) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            console.error(errMsg);
+            toast.error(errMsg);
+        }
+    }
+
+    const deleteTask = async (id: string) => {
+        try {
+            if (!id) return;
+            await deleteTaskApi(id);
+            toast.success("Task deleted successfully");
+        } catch (error) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            console.error(errMsg);
+            toast.error(errMsg);
+        }
     };
 
-    const deleteTask = (id: number) => {
-        setTasks(tasks.filter(task => task.id !== id));
+    const toggleComplete = async (id: string) => {
+        try {
+            if (!id) return;
+            await toggleTaskApi(id, userId as string);
+            toast.success("Task toggle successfully");
+        } catch (error) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            console.error(errMsg);
+            toast.error(errMsg);
+        }
     };
 
-    const toggleComplete = (id: number) => {
-        setTasks(tasks.map(task =>
-            task.id === id ? { ...task, completed: !task.completed } : task
-        ));
-    };
-
+    const handleAdd = async () => {
+        try {
+            await addTask(newTask.title, newTask.description, userId as string);
+            setNewTask({ title: '', description: "" })
+            setAddTask(false);
+            toast.success("Task added successfull")
+        } catch (error) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            console.log(errMsg);
+            toast.error(errMsg)
+        }
+    }
     const completedCount = tasks.filter(t => t.completed).length;
     const pendingCount = tasks.filter(t => !t.completed).length;
     const completionPercentage = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
 
-    // Pagination
     const indexOfLastTask = currentPage * tasksPerPage;
     const indexOfFirstTask = indexOfLastTask - tasksPerPage;
     const currentTasks = tasks.slice(indexOfFirstTask, indexOfLastTask);
     const totalPages = Math.ceil(tasks.length / tasksPerPage);
+
+    const isTitleEmpty = !newTask.title.trim();
 
     return (
         <div className="min-h-screen pt-20 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
@@ -90,12 +129,12 @@ export default function DoNestHome() {
                     {/* Left Column - Add Task & Task List */}
                     <div className="lg:col-span-2 space-y-4">
                         {/* CLICK TO OPEN */}
-                        {!addTask && (
+                        {!isAddTask && (
                             <div
                                 onClick={() => setAddTask(true)}
                                 className="cursor-pointer bg-white/80 backdrop-blur-sm rounded-xl 
-      border border-amber-200/50 shadow-xl px-3 py-2 sm:p-4 
-      hover:shadow-2xl transition-all"
+                                 border border-amber-200/50 shadow-xl px-3 py-2 sm:p-4 
+                                 hover:shadow-2xl transition-all"
                             >
                                 <h2 className="text-xl sm:text-2xl font-serif font-semibold text-amber-800">
                                     + Add New Task
@@ -106,12 +145,12 @@ export default function DoNestHome() {
                         {/* ADD TASK FORM */}
                         <div
                             className={`overflow-hidden transition-all duration-300 ease-out
-      ${addTask ? "max-h-[500px] opacity-100 translate-y-0 mt-4"
+                                 ${isAddTask ? "max-h-[500px] opacity-100 translate-y-0 mt-4"
                                     : "max-h-0 opacity-0 -translate-y-4"}
-    `}
+                               `}
                         >
                             <div className="bg-white/80 backdrop-blur-sm rounded-xl 
-    border border-amber-200/50 shadow-xl px-3 py-2 sm:p-4">
+                                border border-amber-200/50 shadow-xl px-3 py-2 sm:p-4">
 
                                 <h2 className="text-xl sm:text-2xl font-serif text-amber-800 mb-4">
                                     Add New Task
@@ -130,7 +169,7 @@ export default function DoNestHome() {
                                             }
                                             placeholder="Enter your task title"
                                             className="w-full px-3 py-2 bg-white border-b border-amber-200
-            focus:outline-none focus:border-amber-600 text-amber-900"
+                                       focus:outline-none focus:border-amber-600 text-amber-900"
                                         />
                                     </div>
 
@@ -146,7 +185,7 @@ export default function DoNestHome() {
                                             }
                                             placeholder="Add task description"
                                             className="w-full px-3 py-2 bg-white border-b border-amber-200
-            focus:outline-none focus:border-amber-600 resize-none text-amber-900"
+                                                        focus:outline-none focus:border-amber-600 resize-none text-amber-900"
                                         />
                                     </div>
 
@@ -157,23 +196,25 @@ export default function DoNestHome() {
                                                 setNewTask({ title: "", description: "" });
                                             }}
                                             className="px-4 py-1 bg-amber-100 text-amber-900 
-            rounded-lg hover:bg-amber-200 transition"
+                                                        rounded-lg hover:bg-amber-200 transition"
                                         >
                                             Cancel
                                         </button>
 
                                         <button
-                                            className="px-4 py-1 bg-gradient-to-r from-amber-700 to-amber-800 
-            text-white rounded-lg hover:from-amber-800 hover:to-amber-900 
-            transition shadow-md"
-                                        >
+                                            disabled={isTitleEmpty}
+                                            onClick={handleAdd}
+                                            className={`px-4 py-1 rounded-lg transition shadow-md ${isTitleEmpty
+                                                ? "bg-amber-700 opacity-50 text-amber-300 cursor-not-allowed"
+                                                : "bg-gradient-to-r from-amber-700 to-amber-800 text-white"
+                                                } hover:from-amber-800 hover:to-amber-900`}                                         >
                                             Add Task
                                         </button>
+
                                     </div>
                                 </div>
                             </div>
                         </div>
-
 
                         {/* Tasks Upcoming Section */}
                         <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-amber-200/50 shadow-xl p-4 sm:p-6">
@@ -192,19 +233,19 @@ export default function DoNestHome() {
                                     <div className="space-y-4">
                                         {currentTasks.map((task) => (
                                             <div
-                                                key={task.id}
+                                                key={task._id}
                                                 className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-5 border border-amber-200 hover:shadow-lg transition-all"
                                             >
-                                                {editingTask?.id === task.id ? (
+                                                {editingTask?._id === task._id ? (
                                                     <div className="space-y-3">
                                                         <input
                                                             type="text"
-                                                            value={editingTask.title}
+                                                            value={editingTask?.title}
                                                             onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
                                                             className="w-full px-3 py-2 bg-white border border-amber-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-amber-900"
                                                         />
                                                         <textarea
-                                                            value={editingTask.description}
+                                                            value={editingTask?.description}
                                                             onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })}
                                                             rows={2}
                                                             className="w-full px-3 py-2 bg-white border border-amber-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-amber-900 resize-none"
@@ -227,7 +268,7 @@ export default function DoNestHome() {
                                                 ) : (
                                                     <div className="flex items-start gap-4">
                                                         <button
-                                                            onClick={() => toggleComplete(task.id)}
+                                                            onClick={() => toggleComplete(task._id.toString())}
                                                             className={`flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all mt-1 ${task.completed
                                                                 ? 'bg-green-600 border-green-600'
                                                                 : 'border-amber-400 hover:border-amber-600'
@@ -239,12 +280,12 @@ export default function DoNestHome() {
                                                         <div className="flex-1 min-w-0">
                                                             <h3 className={`text-lg font-serif mb-1 ${task.completed ? 'line-through text-amber-600' : 'text-amber-950'
                                                                 }`}>
-                                                                {task.title}
+                                                                {task?.title}
                                                             </h3>
                                                             {task.description && (
                                                                 <p className={`text-sm font-light ${task.completed ? 'text-amber-500' : 'text-amber-700'
                                                                     }`}>
-                                                                    {task.description}
+                                                                    {task?.description}
                                                                 </p>
                                                             )}
                                                         </div>
@@ -257,7 +298,7 @@ export default function DoNestHome() {
                                                                 <Edit3 className="w-4 h-4 text-amber-700" />
                                                             </button>
                                                             <button
-                                                                onClick={() => deleteTask(task.id)}
+                                                                onClick={() => deleteTask(task._id.toString())}
                                                                 className="w-9 h-9 bg-white rounded-lg border border-red-200 hover:border-red-400 transition-all flex items-center justify-center hover:shadow-md"
                                                             >
                                                                 <Trash2 className="w-4 h-4 text-red-600" />
@@ -400,6 +441,6 @@ export default function DoNestHome() {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

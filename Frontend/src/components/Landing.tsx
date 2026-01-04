@@ -1,6 +1,8 @@
 import { CheckCircle2, Plus, Edit3, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function DoNestLanding() {
+    const navigate = useNavigate();
     return (
         <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
             {/* Hero Section */}
@@ -26,7 +28,9 @@ export default function DoNestLanding() {
                         </p>
 
                         <div className="flex items-center justify-center gap-4">
-                            <button className="px-8 py-4 bg-gradient-to-r from-amber-700 to-amber-800 text-amber-50 rounded-full hover:from-amber-800 hover:to-amber-900 transition-all hover:shadow-2xl hover:scale-105 text-lg">
+                            <button
+                                onClick={() => navigate('/register')}
+                                className="cursor-pointer px-8 py-4 bg-gradient-to-r from-amber-700 to-amber-800 text-amber-50 rounded-full hover:from-amber-800 hover:to-amber-900 transition-all hover:shadow-2xl hover:scale-105 text-lg">
                                 Get Started with DoNest
                             </button>
                         </div>

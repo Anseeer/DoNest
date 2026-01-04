@@ -28,12 +28,13 @@ export const AppRoute = () => {
                         <RegistrationPage />
                     </GuestRoute>
                 } />
-                
+
                 <Route path="/home" element={
                     <ProtectedRoute>
                         <HomePage />
                     </ProtectedRoute>
                 } />
+
             </Routes>
         </>
     )
