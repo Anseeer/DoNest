@@ -62,7 +62,7 @@ export class TaskController implements ITaskController {
     updateTask = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { taskData } = req.body;
-            if (!taskData.title || !taskData.description) {
+            if (!taskData.title ) {
                 throw new Error("Missing required data");
             }
 
