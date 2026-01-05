@@ -105,13 +105,14 @@ export const Header = () => {
                                 </Link>
                             </div>
                         ) : (
-                            <div className="flex items-center gap-3">
-                                <button
+                            <div className="pt-4 flex flex-col gap-3">
+                                <Link
+                                    to="/login"
+                                    className="w-full text-center px-4 py-2 bg-gradient-to-r from-amber-700 to-amber-800 text-amber-50 rounded-lg"
                                     onClick={handleLogout}
-                                    className="px-6 py-2.5 bg-gradient-to-r from-amber-700 to-amber-800 text-amber-50 rounded-full hover:from-amber-800 hover:to-amber-900 transition-all hover:shadow-xl"
                                 >
                                     Logout
-                                </button>
+                                </Link>
                             </div>
                         )
                     }
