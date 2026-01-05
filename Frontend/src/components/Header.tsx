@@ -105,7 +105,7 @@ export const Header = () => {
                                 </Link>
                             </div>
                         ) : (
-                            <div className="hidden md:flex items-center gap-3">
+                            <div className="flex items-center gap-3">
                                 <button
                                     onClick={handleLogout}
                                     className="px-6 py-2.5 bg-gradient-to-r from-amber-700 to-amber-800 text-amber-50 rounded-full hover:from-amber-800 hover:to-amber-900 transition-all hover:shadow-xl"
