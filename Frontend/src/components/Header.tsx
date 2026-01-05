@@ -9,45 +9,50 @@ import toast from "react-hot-toast";
 import { AxiosError } from "axios";
 import { useAppDispatch } from "../utilities/AppDispatch";
 
+
 export const Header = () => {
-    const authenticated = useSelector((state: RootState) => state.user.authenticated);
+    const authenticated = useSelector(
+        (state: RootState) => state.user.authenticated
+    );
+
     const [isOpen, setIsOpen] = useState(false);
     const navigate = useNavigate();
-    const dispatch = useAppDispatch()
+    const dispatch = useAppDispatch();
 
     const handleLogout = async () => {
         try {
             await logout();
-            await dispatch(cleanData())
+            dispatch(cleanData());
+            setIsOpen(false); // ✅ close mobile menu
             navigate("/", { replace: true });
-            toast.success("Logout successfully")
+            toast.success("Logout successfully");
         } catch (error) {
-            const errMsg = error instanceof AxiosError ? error.message : String(error);
-            console.log(errMsg)
-            toast.error(errMsg as string);
+            const errMsg =
+                error instanceof AxiosError ? error.message : String(error);
+            toast.error(errMsg);
         }
-    }
+    };
 
     return (
         <nav className="fixed top-0 w-full bg-amber-50/95 backdrop-blur-md border-b border-amber-200/50 z-50 shadow-sm">
             <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-
                 {/* Logo */}
                 <div
-                    onClick={() => navigate('/')}
-                    className="flex cursor-pointer items-center gap-3">
+                    onClick={() => navigate("/")}
+                    className="flex cursor-pointer items-center gap-3"
+                >
                     <div className="relative">
                         <div className="w-10 h-10 bg-gradient-to-br from-amber-700 to-amber-900 rounded-xl flex items-center justify-center shadow-lg">
                             <ClipboardCheck className="w-6 h-6 text-amber-50" />
                         </div>
-                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-orange-600 rounded-full border-2 border-amber-50"></div>
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-orange-600 rounded-full border-2 border-amber-50" />
                     </div>
                     <span className="text-2xl font-serif text-amber-900">
                         DoNest
                     </span>
                 </div>
 
-                {/* Desktop CTA */}
+                {/* Desktop Actions */}
                 {!authenticated ? (
                     <div className="hidden md:flex items-center gap-3">
                         <Link
@@ -86,36 +91,33 @@ export const Header = () => {
             {/* Mobile Menu */}
             {isOpen && (
                 <div className="md:hidden bg-amber-50 border-t border-amber-200 px-6 py-6 space-y-4 shadow-lg">
-                    {!authenticated ?
-                        (
-                            <div className="pt-4 flex flex-col gap-3">
-                                <Link
-                                    to="/login"
-                                    className="w-full text-center px-4 py-2 border border-amber-300 rounded-lg text-amber-900"
-                                    onClick={() => setIsOpen(false)}
-                                >
-                                    Login
-                                </Link>
-                                <Link
-                                    to="/register"
-                                    className="w-full text-center px-4 py-2 bg-gradient-to-r from-amber-700 to-amber-800 text-amber-50 rounded-lg"
-                                    onClick={() => setIsOpen(false)}
-                                >
-                                    Sign Up
-                                </Link>
-                            </div>
-                        ) : (
-                            <div className="pt-4 flex flex-col gap-3">
-                                <Link
-                                    to="/login"
-                                    className="w-full text-center px-4 py-2 bg-gradient-to-r from-amber-700 to-amber-800 text-amber-50 rounded-lg"
-                                    onClick={handleLogout}
-                                >
-                                    Logout
-                                </Link>
-                            </div>
-                        )
-                    }
+                    {!authenticated ? (
+                        <div className="pt-4 flex flex-col gap-3">
+                            <Link
+                                to="/login"
+                                className="w-full text-center px-4 py-2 border border-amber-300 rounded-lg text-amber-900"
+                                onClick={() => setIsOpen(false)}
+                            >
+                                Login
+                            </Link>
+                            <Link
+                                to="/register"
+                                className="w-full text-center px-4 py-2 bg-gradient-to-r from-amber-700 to-amber-800 text-amber-50 rounded-lg"
+                                onClick={() => setIsOpen(false)}
+                            >
+                                Sign Up
+                            </Link>
+                        </div>
+                    ) : (
+                        <div className="pt-4 flex flex-col gap-3">
+                            <button
+                                onClick={handleLogout}
+                                className="w-full text-center px-4 py-2 bg-gradient-to-r from-amber-700 to-amber-800 text-amber-50 rounded-lg"
+                            >
+                                Logout
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
         </nav>
